@@ -1,0 +1,643 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<title>منصة التعاميم العقارية</title>
+<style>
+
+*{
+
+    margin:0;
+
+    padding:0;
+
+    box-sizing:border-box;
+
+    font-family:Arial;
+
+}
+
+body{
+
+    background:#f3f6fb;
+
+    padding:25px;
+
+}
+
+.top-bar{
+
+    display:flex;
+
+    justify-content:flex-start;
+
+    margin-bottom:20px;
+
+}
+
+.logo{
+
+    width:130px;
+
+}
+
+.header{
+
+    text-align:center;
+
+    margin-bottom:25px;
+
+}
+
+.header h1{
+
+    color:#1e3a8a;
+
+    font-size:32px;
+
+}
+
+.header p{
+
+    color:#64748b;
+
+    margin-top:8px;
+
+}
+
+.search-container{
+
+    background:white;
+
+    padding:20px;
+
+    border-radius:16px;
+
+    margin-bottom:25px;
+
+    display:flex;
+
+    justify-content:center;
+
+    align-items:center;
+
+    gap:10px;
+
+    flex-wrap:wrap;
+
+    box-shadow:0px 4px 10px rgba(0,0,0,0.08);
+
+}
+
+select,input{
+
+    padding:10px;
+
+    border-radius:10px;
+
+    border:1px solid #ddd;
+
+    min-width:220px;
+
+}
+
+button{
+
+    background:#2563eb;
+
+    color:white;
+
+    border:none;
+
+    padding:10px 20px;
+
+    border-radius:10px;
+
+    cursor:pointer;
+
+}
+
+button:hover{
+
+    background:#1d4ed8;
+
+}
+
+.card{
+
+    background:white;
+
+    border-radius:16px;
+
+    padding:25px;
+
+    margin-bottom:25px;
+
+    position:relative;
+
+    box-shadow:0px 4px 12px rgba(0,0,0,0.08);
+
+}
+
+.status-badge{
+
+    position:absolute;
+
+    top:20px;
+
+    left:20px;
+
+    padding:8px 18px;
+
+    border-radius:20px;
+
+    font-size:14px;
+
+    font-weight:bold;
+
+}
+
+.active-status{
+
+    background:#dcfce7;
+
+    color:#166534;
+
+}
+
+.updated-status{
+
+    background:#fef3c7;
+
+    color:#92400e;
+
+}
+
+.cancelled-status{
+
+    background:#fee2e2;
+
+    color:#991b1b;
+
+}
+
+.card-title{
+
+    font-size:28px;
+
+    font-weight:bold;
+
+    color:#1e293b;
+
+    margin-bottom:10px;
+
+}
+
+.version-box{
+
+    background:#eff6ff;
+
+    color:#1d4ed8;
+
+    padding:8px 12px;
+
+    border-radius:12px;
+
+    display:inline-block;
+
+    font-weight:bold;
+
+    margin-bottom:20px;
+
+}
+
+.info-grid{
+
+    display:grid;
+
+    grid-template-columns:repeat(auto-fit,minmax(220px,1fr));
+
+    gap:12px;
+
+    margin-bottom:20px;
+
+}
+
+.info-box{
+
+    background:#f8fafc;
+
+    padding:15px;
+
+    border-radius:12px;
+
+}
+
+.text-box{
+
+    background:#f8fafc;
+
+    padding:18px;
+
+    border-radius:12px;
+
+    margin-top:15px;
+
+    line-height:2;
+
+}
+
+.history-box{
+
+    margin-top:20px;
+
+    background:#f8fafc;
+
+    padding:15px;
+
+    border-radius:12px;
+
+}
+
+.history-box summary{
+
+    cursor:pointer;
+
+    font-weight:bold;
+
+    color:#2563eb;
+
+}
+
+.old-version{
+
+    background:white;
+
+    padding:15px;
+
+    margin-top:15px;
+
+    border-radius:12px;
+
+}
+
+.no-results{
+
+    text-align:center;
+
+    color:red;
+
+    font-size:18px;
+
+}
+</style>
+</head>
+<body>
+<div class="top-bar">
+<img src="logo.png" class="logo">
+</div>
+<div class="header">
+<h1>منصة التعاميم العقارية</h1>
+<p>عرض التعاميم الحالية والإصدارات السابقة</p>
+</div>
+<div class="search-container">
+<select id="titleFilter">
+<option value="">كل العناوين</option>
+</select>
+<select id="typeFilter">
+<option value="">كل أنواع التعميم</option>
+</select>
+<input type="text" id="keywordFilter" placeholder="بحث بالكلمات المفتاحية">
+<input type="date" id="dateFilter">
+<button onclick="searchCirculars()">بحث</button>
+</div>
+<div id="results"></div>
+<script>
+
+const allData = __DATA_PLACEHOLDER__
+</script>
+<script>
+
+loadFilters()
+
+function loadFilters(){
+
+    let titleDropdown = document.getElementById("titleFilter")
+
+    let typeDropdown = document.getElementById("typeFilter")
+
+    let titles = [...new Set(allData.map(x => x.title))]
+
+    let types = [...new Set(allData.map(x => x.type))]
+
+    titles.forEach(title=>{
+
+        titleDropdown.innerHTML += `
+<option value="${title}">
+
+                ${title}
+</option>
+
+        `
+
+    })
+
+    types.forEach(type=>{
+
+        typeDropdown.innerHTML += `
+<option value="${type}">
+
+                ${type}
+</option>
+
+        `
+
+    })
+
+    searchCirculars()
+
+}
+
+function searchCirculars(){
+
+    let title = document.getElementById("titleFilter").value
+
+    let type = document.getElementById("typeFilter").value
+
+    let keyword = document.getElementById("keywordFilter").value.toLowerCase()
+
+    let date = document.getElementById("dateFilter").value
+
+    let filtered = allData.filter(item=>{
+
+        let titleMatch =
+
+            title === "" || item.title === title
+
+        let typeMatch =
+
+            type === "" || item.type === type
+
+        let keywordMatch =
+
+            keyword === "" ||
+
+            item.title.toLowerCase().includes(keyword) ||
+
+            item.text.toLowerCase().includes(keyword) ||
+
+            item.mainCode.toLowerCase().includes(keyword)
+
+        let dateMatch =
+
+            date === "" || item.date.includes(date)
+
+        return titleMatch && typeMatch && dateMatch && keywordMatch
+
+    })
+
+    let grouped = {}
+
+    filtered.forEach(item=>{
+
+        if(!grouped[item.mainCode]){
+
+            grouped[item.mainCode] = []
+
+        }
+
+        grouped[item.mainCode].push(item)
+
+    })
+
+    Object.keys(grouped).forEach(code=>{
+
+        grouped[code].sort((a,b)=> b.version - a.version)
+
+    })
+
+    renderResults(grouped)
+
+}
+
+function getArabicStatus(status){
+
+    if(!status) return ""
+
+    status = String(status)
+
+    if(
+
+        status.includes("ساري") ||
+
+        status.toLowerCase().includes("active")
+
+    ){
+
+        return "ساري"
+
+    }
+
+    if(
+
+        status.includes("حدث") ||
+
+        status.includes("محدث") ||
+
+        status.includes("مصاف") ||
+
+        status.toLowerCase().includes("updated")
+
+    ){
+
+        return "محدث"
+
+    }
+
+    if(
+
+        status.includes("ملغي") ||
+
+        status.toLowerCase().includes("cancel")
+
+    ){
+
+        return "ملغي"
+
+    }
+
+    return status
+
+}
+
+
+function getStatusClass(status){
+
+    if(!status) return ""
+
+    status = String(status)
+
+    if(
+
+        status.includes("ساري") ||
+
+        status.toLowerCase().includes("active")
+
+    ){
+
+        return "active-status"
+
+    }
+
+    if(
+
+        status.includes("حدث") ||
+
+        status.includes("محدث") ||
+
+        status.includes("مصاف") ||
+
+        status.toLowerCase().includes("updated")
+
+    ){
+
+        return "updated-status"
+
+    }
+
+    if(
+
+        status.includes("ملغي") ||
+
+        status.toLowerCase().includes("cancel")
+
+    ){
+
+        return "cancelled-status"
+
+    }
+
+    return ""
+
+}
+
+function renderResults(grouped){
+
+    let resultBox = document.getElementById("results")
+
+    let html = ""
+
+    let codes = Object.keys(grouped)
+    codes.reverse()
+
+    if(codes.length === 0){
+
+        resultBox.innerHTML = `
+<div class="no-results">
+
+                لا توجد نتائج
+</div>
+
+        `
+
+        return
+
+    }
+
+    codes.forEach(code=>{
+
+        let versions = grouped[code]
+
+        let current = versions[0]
+
+        let oldVersions = versions.slice(1)
+
+        html += `
+<div class="card">
+<div class="status-badge ${getStatusClass(current.status)}">
+
+                ${getArabicStatus(current.status)}
+</div>
+<div class="card-title">
+
+                ${current.title}
+</div>
+<div class="version-box">
+
+                ${current.mainCode} - V${current.version}
+</div>
+<div class="info-grid">
+<div class="info-box">
+<strong>نوع التعميم:</strong><br>
+
+                    ${current.type}
+</div>
+<div class="info-box">
+<strong>جهة التعميم:</strong><br>
+
+                    ${current.source}
+</div>
+<div class="info-box">
+<strong>التاريخ:</strong><br>
+
+                    ${current.date}
+</div>
+</div>
+<div class="text-box">
+<strong>نص التعميم الحالي:</strong>
+<p>${current.text}</p>
+</div>
+
+        `
+
+        if(oldVersions.length > 0){
+
+            html += `
+<details class="history-box">
+<summary>عرض الإصدارات السابقة</summary>
+
+            `
+
+            oldVersions.forEach(old=>{
+
+                html += `
+<div class="old-version">
+<p>
+<strong>الإصدار:</strong>
+
+                        V${old.version}
+</p>
+<p>
+<strong>الحالة:</strong>
+
+                        ${getArabicStatus(old.status)}
+</p>
+<p>
+<strong>التاريخ:</strong>
+
+                        ${old.date}
+</p>
+<div class="text-box">
+<p>${old.text}</p>
+</div>
+</div>
+
+                `
+
+            })
+
+            html += `</details>`
+
+        }
+
+        html += `</div>`
+
+    })
+
+    resultBox.innerHTML = html
+
+}
+</script>
+</body>
+</html>
+ 
